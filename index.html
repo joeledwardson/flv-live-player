@@ -1,0 +1,77 @@
+<html style="margin: 0; padding: 0">
+
+<head>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/flv.js/1.3.2/flv.min.js"
+    integrity="sha512-viIpeG+70da8uvm9aktaT4dXxlalio52xjaKmGSjiUXrfPo4jRlp6elFvAEuV7GxmVB/qwQZiCQNadaF3DfVZg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+</head>
+
+<body style="margin: 0; padding: 0;">
+  <video muted id="videoElement"></video>
+  <script>
+    function init() {
+      const search = window.location.search
+      console.log('window search params: ', search);
+      const params = new URLSearchParams(search);
+      const videoUrl = params.get('videoUrl');
+      if (!videoUrl) {
+        console.error('videoId not found in query params: ', search);
+        return
+      }
+      const decodedVideoUrl = decodeURIComponent(videoUrl);
+      console.log({videoUrl, decodedVideoUrl}, 'decoded video url')
+
+      if (!flvjs.isSupported()) {
+        console.error('flvjs is not supported!');
+        return
+      }
+
+      console.log('init flvjs')
+      var videoElement = document.getElementById('videoElement');
+      const width = params.get('width');
+      const height = params.get('height');
+      if (width) videoElement.style.width = width;
+      if (height) videoElement.style.height = height;
+
+
+      var flvPlayer = flvjs.createPlayer({
+        type: 'flv',
+        url: decodedVideoUrl,
+        isLive: true,
+      },
+        {
+          isLive: true,
+          enableWorker: true,
+          enableStashBuffer: false,
+          lazyLoad: false,
+
+        });
+      flvPlayer.attachMediaElement(videoElement);
+      flvPlayer.load();
+      const play = () => {
+        const result = flvPlayer.play();
+        if (result instanceof Promise) {
+          result.then(() => {
+            console.log('play success');
+          }).catch((e) => {
+            console.log('play error', e);
+            setTimeout(play, 10_000)
+          })
+        } else {
+          console.error('play error, returned null')
+        }
+      }
+      play()
+
+    }
+
+    init()
+
+
+  </script>
+
+</body>
+
+</html>
